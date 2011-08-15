@@ -7,6 +7,9 @@ import api
 
 import mx.DateTime
 
+import logging
+log = logging.getLogger(__name__)
+
 def expose(f):
     expose.exposed.add(f)
     return f
@@ -19,17 +22,63 @@ class Operations(object):
         self._db = db.connect()
 
     @expose
+    def resetschema(self):
+        c = self._db.cursor()
+
+        if raw_input('Are you sure you want to reset the database schema y,n? ').lower() != 'y':
+            return
+
+        with self._db:
+            self._db.execute('DROP TABLE IF EXISTS expiry_months')
+            self._db.execute('CREATE TABLE expiry_months (label TEXT, month TEXT, monthint INTEGER)')
+
+            self._db.execute('DROP TABLE IF EXISTS options')
+            self._db.execute('CREATE TABLE options (ric TEXT UNIQUE ON CONFLICT IGNORE)')
+
+            self._db.execute('DROP VIEW IF EXISTS options_split')
+            self._db.execute('CREATE VIEW options_split AS SELECT substr(ric, 1, 3) AS underlying, substr(ric, 4, 1) AS monthcode, CAST (substr(ric, 5, 2) AS INTEGER) AS day, CAST(substr(ric, 7, 2) AS INTEGER) AS year, CAST(substr(ric, 9, 5) AS INTEGER) AS strike, ric FROM options WHERE length(ric) = 15;')
+
+            self._db.execute('DROP VIEW IF EXISTS options_clean')
+            self._db.execute('CREATE VIEW options_clean AS SELECT o.underlying, o.day, e.monthint AS month, (CASE WHEN o.year < 90 THEN (2000 + o.year) ELSE (1900 + o.year) END) AS year, o.strike, CASE WHEN lower(o.monthcode) = o.monthcode THEN \'P\' ELSE \'C\' END AS type, o.ric FROM options_split AS o, expiry_months AS e WHERE e.label = upper(o.monthcode)')
+
+    @expose
     def getoptionexpirymonths(self):
         expiry_months = self._api.GetOptionExpiryMonths()
-        c = self._db.cursor()
-        c.execute('DROP TABLE IF EXISTS expiry_months')
-        c.execute('CREATE TABLE expiry_months (label CHAR, month STRING, monthint INT)')
-        for d in expiry_months.data:
-            if d.field != 'OptionMonth':
-                continue
-            for label in d.value:
-                c.execute('INSERT INTO expiry_months (label, month, monthint) VALUES (?,?,?)', (label, d.longName, mx.DateTime.Month[d.longName]))
-        self._db.commit()
+        with self._db:
+            self._db.execute('DELETE FROM expiry_months')
+            for d in expiry_months.data:
+                if d.field != 'OptionMonth':
+                    continue
+                for label in d.value:
+                    self._db.execute('INSERT INTO expiry_months (label, month, monthint) VALUES (?,?,?)', (label, d.longName, mx.DateTime.Month[d.longName]))
+
+    @expose
+    def expandoptionchain(self, base, date):
+        chain = '0#%s*.U' % (base,)
+        log.info('Expanding option chain for %s for date %s.', chain, date)
+        options = self._api.ExpandChain(
+                    self._api.Instrument(code=chain),
+                    self._api.DateRange(start=date, end=date),
+                    self._api.TimeRange(start='0:00:00.000', end='0:00:00.000'),
+                    True)
+        with self._db:
+            log.info('Inserting %i rics.', len(options.instrument))
+            for instrument in options.instrument:
+                self._db.execute('INSERT INTO options (ric) VALUES (?)', (instrument.code,))
+            log.info('Finished inserting %i rics', len(options.instrument))
+
+    @expose
+    def clearstoredchains(self):
+        with self._db:
+            self._db.execute('DELETE FROM options')
+
+    @expose
+    def getinflightstatus(self):
+        print self._api.GetInflightStatus()
+
+    @expose
+    def cleanup(self):
+        print self._api.CleanUp()
 
     def get_exposed(self):
         exposed = [f.__name__ for f in 
@@ -38,9 +87,15 @@ class Operations(object):
         return exposed
             
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print 'Usage: %s command [arg1 arg2 ...]' % (sys.argv[0],)
-        sys.exit(1)
+    logging.basicConfig(level=logging.INFO)
 
     operations = Operations()
-    getattr(operations, sys.argv[1])()
+
+    if len(sys.argv) < 2:
+        print 'Usage: %s command [arg1 arg2 ...]' % (sys.argv[0],)
+        print 'Available commands:'
+        for exposed in operations.get_exposed():
+            print '\t' + exposed
+        sys.exit(1)
+
+    getattr(operations, sys.argv[1])(*sys.argv[2:])
