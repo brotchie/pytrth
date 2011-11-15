@@ -1,0 +1,16 @@
+templateName: Option TAQ
+requestType: TimeAndSales
+fields:
+    Trade:
+        - Price
+        - Volume
+    Quote:
+        - Bid Price
+        - Ask Price
+disableHeader: False
+marketDepth: 0
+dateFormat: YYYYMMDD
+disableDataPersistence: False
+includeCurrentRIC: False
+applyCorrections: False
+displayMicroseconds: True
