@@ -1,6 +1,9 @@
 import suds
 import functools
 
+from time import strftime
+from base64 import b64decode
+
 from config import load_default_config
 
 class TRTHApi(object):
@@ -47,6 +50,9 @@ class TRTHApi(object):
         type constructors to the type factory.
 
         """
+        return self._dispatch(name)
+
+    def _dispatch(self, name):
         assert self._client and self._factory
 
         if name in self._valid_methods:
@@ -55,7 +61,17 @@ class TRTHApi(object):
             return functools.partial(self._factory.create, name)
         else:
             raise AttributeError
-    
+
+    def GetPage(self, ric, date=None, time=None):
+        getPageFcn = self._dispatch('GetPage')
+
+        date = date or strftime('%Y-%m-%d')
+        time = time or '00:00:00'
+
+        result = getPageFcn(ric, date, time)
+
+        return b64decode(result.data).decode('utf-8', 'ignore')
+
 class TypeFactory(object):
     NAMESPACE = 'ns0'
     TYPE_DEFAULTS = {

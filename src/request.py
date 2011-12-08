@@ -40,9 +40,9 @@ class RequestManager(object):
         capacity = status.limit - status.active
         
         log.info('Inflight Status active: %i active %i.', status.active, status.limit)
-        if capacity:
-            with self._db:
-                c = self._db.execute('SELECT 
+        #if capacity:
+            #with self._db:
+                #c = self._db.execute('SELECT 
 
         #requestID = trth.SubmitRequest(request.generateRequestSpec(trth))
         #with self._db:
@@ -110,6 +110,7 @@ if __name__ == '__main__':
 
     template = RequestTemplate('../templates/optionTAQ.yaml')
     request = Request(template, 'BHP', 'BHP.AX', '2010-05-23', ('0:00', '23:59:59.999'), '/var/tmp/bhp.csv')
-
-    print rm.submit_request(request)
+    
+    print trth.SubmitRequest(request.generateRequestSpec(trth))
+#    print rm.submit_request(request)
 

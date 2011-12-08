@@ -68,6 +68,14 @@ class Operations(object):
             log.info('Finished inserting %i rics', len(options.instrument))
 
     @expose
+    def setftpdetails(self, hostname, username, password, path):
+        print self._api.SetFTPDetails(hostname, username, password, path)
+
+    @expose
+    def testftp(self):
+        print self._api.TestFTP()
+
+    @expose
     def clearstoredchains(self):
         with self._db:
             self._db.execute('DELETE FROM options')
@@ -79,6 +87,10 @@ class Operations(object):
     @expose
     def cleanup(self):
         print self._api.CleanUp()
+
+    @expose
+    def getpage(self, ric, date=None, time=None):
+        print self._api.GetPage(ric, date, time)
 
     def get_exposed(self):
         exposed = [f.__name__ for f in 
