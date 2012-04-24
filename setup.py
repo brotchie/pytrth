@@ -10,4 +10,9 @@ setup(name='pytrth',
     author_email='brotchie@gmail.com',
     url='https://github.com/brotchie/pytrth',
     install_requires=['suds', 'pyyaml', 'egenix-mx-base'],
+    entry_points={
+        'console_scripts' : [
+            'pytrth = trth:main'
+        ]
+    }
 )

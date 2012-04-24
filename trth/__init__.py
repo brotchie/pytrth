@@ -98,7 +98,7 @@ class Operations(object):
         exposed.sort()
         return exposed
             
-if __name__ == '__main__':
+def main():
     logging.basicConfig(level=logging.INFO)
 
     operations = Operations()
