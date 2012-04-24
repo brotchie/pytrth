@@ -10,7 +10,7 @@ interface, greatly easing the creation of TRTH API calls.
 Usage
 =====
 
-TRTH credentials should be placed in ~/.trth, which should be a YAML file containing the following::
+TRTH credentials are read from ~/.trth which should be a YAML file containing the following::
 
   credentials:
     username: *username*
