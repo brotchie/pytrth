@@ -7,3 +7,17 @@ service, wrapping API object in Pythonic object where appropriate. The TRTHApi
 class in src/api.py wraps this suds interface with an even higher level
 interface, greatly easing the creation of TRTH API calls.
 
+Usage
+=====
+
+TRTH credentials should be placed in ~/.trth, which should be a YAML file containing the following::
+
+  credentials:
+    username: *username*
+    password: *password*
+
+You can test your connection to TRTH by requesting the landing speed guide page::
+  
+  pytrth getpage THOMSONREUTERS
+
+
