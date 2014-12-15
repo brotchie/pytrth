@@ -1,7 +1,4 @@
-Python Interface to the Thomson Reuters Tick History API
-========================================================
-
-**Note: This Python package is in no way affiliated with Thomson Reuters or any of its subsidiaries.**
+**Note: This Python package is out of date. The crew at ContinuumIO have put a lot of effort into maintaining their own fork, I'd recommend using their version at https://github.com/ContinuumIO/pytrth.**
 
 pytrth provides a lite wrapper around the Thomson Reuters Tick History (TRTH)
 API. A command line tool is provided to assist extraction of options chains.
